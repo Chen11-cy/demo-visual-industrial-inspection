@@ -102,3 +102,28 @@ The tests cover model gating, geometry, sample decisions, defect precedence, ear
 The server binds to loopback by default. It is an unauthenticated local demo; do not expose it directly to the Internet. Camera images, OCR readings, and reports are processed locally. No credentials, original operator ledger, personal Word documents, or diagnostic history are part of this repository.
 
 Original application code is under the [MIT license](LICENSE). Third-party libraries and models retain their own licenses; see [THIRD_PARTY.md](THIRD_PARTY.md).
+
+## Practical Operations Summary
+
+This section summarizes the validated deployment flow used during real project delivery.
+
+1. Build a standalone release folder from this repository and exclude `.git` and Python caches.
+2. Generate `SHA256SUMS.txt` for package integrity checks.
+3. Compress the release folder into a single `tar.gz` file for transfer.
+4. On target devices, use `install.sh` for online installation.
+5. For offline devices, prepare `wheelhouse/` in advance and install with `tools/pip.pyz`.
+6. Start with `run.sh`, then verify camera nodes by `v4l2-ctl --list-devices` and `ls /dev/video*`.
+7. Use image-only mode for no-camera smoke checks, then validate with real camera and board.
+8. Run regression tests before release:
+
+```bash
+.venv/bin/python -m unittest -q test_engine test_decisions test_live
+```
+
+Validated behavior points from field integration:
+
+- All 16 checkpoints can be visible on 1280x800 and 1280x720 layouts after UI compaction.
+- A06 (upper USB assembly) and A12 (VRTC) use independent "2 hits in 3 seconds" confirmation windows.
+- The cycle finalizes early when all 16 checkpoints are confirmed; 20 seconds is only the upper timeout.
+- Reinspection updates only selected checkpoints and does not increase the board count.
+- Runtime data is isolated in `data/` and can be relocated with `--data-dir` or `INSPECTION_DATA_DIR`.
